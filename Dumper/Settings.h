@@ -19,7 +19,7 @@ namespace Settings
 		inline std::string GameName = "";
 		inline std::string GameVersion = "";
 
-		inline constexpr const char* SDKGenerationPath = "C:/Dumper-7";
+		inline constexpr const char* SDKGenerationPath = "C:/Dumper8";
 	}
 
 	namespace CppGenerator
@@ -53,8 +53,8 @@ R"(
 		return Function(std::forward<ParamTypes>(Args)...);
 	}
 )";
-		/* An option to force the UWorld::GetWorld() function in the SDK to get the world through an instance of UEngine. Useful for games on which the dumper finds the wrong GWorld offset. */
-		constexpr bool bForceNoGWorldInSDK = false;
+		/* GWorld shouldn't be used because most of the time its wrong */
+		constexpr bool bForceNoGWorldInSDK = true;
 
 		/* This will allow the user to manually initialize global variable addresses in the SDK (eg. GObjects, GNames, AppendString). */
 		constexpr bool bAddManualOverrideOptions = true;
@@ -77,11 +77,11 @@ R"(
 	{
 		inline constexpr bool bGenerateAssertionFile = false;
 
-		/* Adds static_assert for struct-size, as well as struct-alignment */
-		inline constexpr bool bGenerateInlineAssertionsForStructSize = true;
+		/* Sometimes wrong */
+		inline constexpr bool bGenerateInlineAssertionsForStructSize = false;
 
-		/* Adds static_assert for member-offsets */
-		inline constexpr bool bGenerateInlineAssertionsForStructMembers = true;
+		/* Sometimes wrong */
+		inline constexpr bool bGenerateInlineAssertionsForStructMembers = false;
 
 
 		/* Prints debug information during Mapping-Generation */
