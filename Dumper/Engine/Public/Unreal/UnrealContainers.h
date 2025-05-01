@@ -252,11 +252,15 @@ namespace UC
 		inline const ArrayElementType& GetUnsafe(int32 Index) const { return Data[Index]; }
 
 	public:
+		inline void ResizeTo(int32_t NewMax)
+		{
+			Data = (ArrayElementType*)realloc(Data, (MaxElements = NewMax) * sizeof(ArrayElementType));
+		}
+
 		/* Adds to the array if there is still space for one more element */
 		inline bool Add(const ArrayElementType& Element)
 		{
-			if (GetSlack() <= 0)
-				return false;
+			ResizeTo((NumElements + 1));
 
 			Data[NumElements] = Element;
 			NumElements++;
@@ -286,6 +290,14 @@ namespace UC
 
 			if (!Data)
 				memset(Data, 0, NumElements * ElementSize);
+		}
+
+		inline void Free()
+		{
+			if (Data)
+				free(Data);
+			MaxElements = 0;
+			NumElements = 0;
 		}
 
 	public:
