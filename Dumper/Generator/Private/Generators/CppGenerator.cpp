@@ -634,6 +634,56 @@ void CppGenerator::GenerateStruct(const StructWrapper& Struct, StreamType& Struc
 		return;
 
 	std::string UniqueName = StructNameOverride.empty() ? GetStructPrefixedName(Struct) : StructNameOverride;
+
+	if (UniqueName == "FFastArraySerializer")
+	{
+		StructFile << R"(struct FFastArraySerializer
+{
+public:
+    uint8 ItemMap[80];
+    int32 IDCounter;
+    int32 ArrayReplicationKey;
+    char GuidReferencesMap[0x50];
+    char GuidReferencesMap_StructDelta[0x50];
+
+    int32 CachedNumItems;
+    int32 CachedNumItemsToConsiderForWriting;
+
+    EFastArraySerializerDeltaFlags DeltaFlags;
+
+    uint8 _Padding1[0x7];
+
+    void MarkItemDirty(FFastArraySerializerItem& Item, bool markArrayDirty = true)
+    {
+        if (Item.ReplicationID == -1)
+        {
+            Item.ReplicationID = ++IDCounter;
+            if (IDCounter == -1)
+            {
+                IDCounter++;
+            }
+        }
+
+        Item.ReplicationKey++;
+        if (markArrayDirty) MarkArrayDirty();
+    }
+
+    void MarkArrayDirty()
+    {
+        ArrayReplicationKey++;
+        if (ArrayReplicationKey == -1)
+        {
+            ArrayReplicationKey++;
+        }
+
+        CachedNumItems = -1;
+        CachedNumItemsToConsiderForWriting = -1;
+    }
+};)";
+
+		return;
+	}
+
 	std::string UniqueSuperName;
 
 	const int32 StructSize = Struct.GetSize();
