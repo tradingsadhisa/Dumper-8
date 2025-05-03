@@ -687,6 +687,72 @@ public:
 		return;
 	}
 
+	if (UniqueName == "FQuat")
+	{
+		StructFile << R"(
+struct FRotator;
+
+struct FQuat
+{
+	float X, Y, Z, W;
+
+	FQuat() : X(0), Y(0), Z(0), W(1) {}
+	FQuat(float x, float y, float z, float w) : X(x), Y(y), Z(z), W(w) {}
+
+	static FQuat FromRotator(const FRotator& R);
+};
+
+inline FQuat FQuat::FromRotator(const FRotator& R)
+{
+	const float P = DegreesToRadians(R.Pitch) * 0.5f;
+	const float Y = DegreesToRadians(R.Yaw) * 0.5f;
+	const float Rl = DegreesToRadians(R.Roll) * 0.5f;
+
+	const float sinP = std::sin(P);
+	const float cosP = std::cos(P);
+	const float sinY = std::sin(Y);
+	const float cosY = std::cos(Y);
+	const float sinR = std::sin(Rl);
+	const float cosR = std::cos(Rl);
+
+	FQuat q;
+	q.W = cosR * cosP * cosY + sinR * sinP * sinY;
+	q.X = sinR * cosP * cosY - cosR * sinP * sinY;
+	q.Y = cosR * sinP * cosY + sinR * cosP * sinY;
+	q.Z = cosR * cosP * sinY - sinR * sinP * cosY;
+
+	return q;
+}
+
+inline FQuat FRotator::Quaternion() const
+{
+	return FQuat::FromRotator(*this);
+}
+
+)";
+		return;
+	}
+
+	if (UniqueName == "FRotator")
+	{
+		StructFile << R"(
+struct FQuat;
+
+struct FRotator
+{
+	float Pitch;
+	float Yaw;
+	float Roll;
+
+	FRotator(float InPitch = 0, float InYaw = 0, float InRoll = 0)
+		: Pitch(InPitch), Yaw(InYaw), Roll(InRoll) {}
+
+	FQuat Quaternion() const;
+};
+)";
+		return;
+	}
+
 	std::string UniqueSuperName;
 
 	const int32 StructSize = Struct.GetSize();
@@ -5130,10 +5196,16 @@ using TActorBasedCycleFixup = CyclicDependencyFixupImpl::TCyclicClassFixup<Under
 void CppGenerator::GenerateUnrealContainers(StreamType& UEContainersHeader)
 {
 	WriteFileHead(UEContainersHeader, nullptr, EFileType::UnrealContainers, 
-		"Container implementations with iterators. See https://github.com/Fischsalat/UnrealContainers", "#include <cmat>\n#include <string>\n#include <stdexcept>\n#include <iostream>\n#include \"UtfN.hpp\"");
+		"Container implementations with iterators. See https://github.com/Fischsalat/UnrealContainers", "#include <cmath>\n#include <string>\n#include <stdexcept>\n#include <iostream>\n#include \"UtfN.hpp\"");
 
 
 	UEContainersHeader << R"(
+
+constexpr float DegreesToRadians(float Degrees)
+{
+	return Degrees * (3.14159265358979323846f / 180.f);
+}
+
 namespace UC
 {	
 	typedef int8_t  int8;
