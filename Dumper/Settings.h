@@ -19,7 +19,7 @@ namespace Settings
 		inline std::string GameName = "";
 		inline std::string GameVersion = "";
 
-		inline constexpr const char* SDKGenerationPath = "C:/Dumper8";
+		inline constexpr const char* SDKGenerationPath = "C:/Dumper-8";
 	}
 
 	namespace CppGenerator
@@ -40,7 +40,7 @@ namespace Settings
 		/* Customizable part of Cpp code to allow for a custom 'uintptr_t InSDKUtils::GetImageBase()' function */
 		constexpr const char* GetImageBaseFuncBody = 
 R"({
-	return reinterpret_cast<uintptr_t>(GetModuleHandle(0));
+	return reinterpret_cast<uint64_t>(GetModuleHandle(0));
 }
 )";
 		/* Customizable part of Cpp code to allow for a custom 'InSDKUtils::CallGameFunction' function */
@@ -86,6 +86,9 @@ R"(
 
 		/* Prints debug information during Mapping-Generation */
 		inline constexpr bool bShouldPrintMappingDebugData = false;
+
+		/* Disable this if your using reboot launcher and your injecting before like it loads fully*/
+		inline constexpr bool bLateInjection = true;
 	}
 
 	//* * * * * * * * * * * * * * * * * * * * *// 
