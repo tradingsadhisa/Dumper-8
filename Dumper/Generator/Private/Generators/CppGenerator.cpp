@@ -700,6 +700,30 @@ struct FQuat
 	FQuat(float x, float y, float z, float w) : X(x), Y(y), Z(z), W(w) {}
 
 	static FQuat FromRotator(const FRotator& R);
+	FRotator ToRotator() const;
+
+	FQuat Inverse() const
+	{
+		return FQuat(-X, -Y, -Z, W);
+	}
+
+	float SizeSquared() const
+	{
+		return X * X + Y * Y + Z * Z + W * W;
+	}
+
+	void Normalize()
+	{
+		float Size = std::sqrt(SizeSquared());
+		if (Size > 0.00001f)
+		{
+			const float InvSize = 1.0f / Size;
+			X *= InvSize;
+			Y *= InvSize;
+			Z *= InvSize;
+			W *= InvSize;
+		}
+	}
 };
 
 inline FQuat FQuat::FromRotator(const FRotator& R)
@@ -722,6 +746,37 @@ inline FQuat FQuat::FromRotator(const FRotator& R)
 	q.Z = cosR * cosP * sinY - sinR * sinP * cosY;
 
 	return q;
+}
+
+inline FRotator FQuat::ToRotator() const
+{
+	const float SingularityTest = Z * X - W * Y;
+	const float YawY = 2.f * (W * Z + X * Y);
+	const float YawX = 1.f - 2.f * (Y * Y + Z * Z);
+
+	float Pitch, Yaw, Roll;
+
+	const float SINGULARITY_THRESHOLD = 0.4999995f;
+	if (SingularityTest < -SINGULARITY_THRESHOLD)
+	{
+		Pitch = -90.0f;
+		Yaw = RadiansToDegrees(std::atan2(YawY, YawX));
+		Roll = RadiansToDegrees(-Yaw - (2.f * std::atan2(X, W)));
+	}
+	else if (SingularityTest > SINGULARITY_THRESHOLD)
+	{
+		Pitch = 90.0f;
+		Yaw = RadiansToDegrees(std::atan2(YawY, YawX));
+		Roll = RadiansToDegrees(Yaw - (2.f * std::atan2(X, W)));
+	}
+	else
+	{
+		Pitch = RadiansToDegrees(std::asin(2.f * SingularityTest));
+		Yaw = RadiansToDegrees(std::atan2(YawY, YawX));
+		Roll = RadiansToDegrees(std::atan2(-2.f * (W * X + Y * Z), 1.f - 2.f * (X * X + Y * Y)));
+	}
+
+	return FRotator(Pitch, Yaw, Roll);
 }
 
 inline FQuat FRotator::Quaternion() const
@@ -748,10 +803,89 @@ struct FRotator
 		: Pitch(InPitch), Yaw(InYaw), Roll(InRoll) {}
 
 	FQuat Quaternion() const;
+
+    void Normalize()
+	{
+		Pitch = std::fmod(Pitch, 360.0f);
+		Yaw = std::fmod(Yaw, 360.0f);
+		Roll = std::fmod(Roll, 360.0f);
+	}
+
+	bool Equals(const FRotator& Other, float Tolerance = 1e-4f) const
+	{
+		return std::abs(Pitch - Other.Pitch) < Tolerance &&
+		       std::abs(Yaw - Other.Yaw) < Tolerance &&
+		       std::abs(Roll - Other.Roll) < Tolerance;
+	}
 };
 )";
 		return;
 	}
+
+	if (UniqueName == "FGuid")
+	{
+		StructFile << R"(
+struct FGuid
+{
+public:
+    int32 A;
+    int32 B;
+    int32 C;
+    int32 D;
+
+uint32_t A;
+	uint32_t B;
+	uint32_t C;
+	uint32_t D;
+
+	FGuid()
+		: A(0), B(0), C(0), D(0) {}
+
+	FGuid(uint32_t InA, uint32_t InB, uint32_t InC, uint32_t InD)
+		: A(InA), B(InB), C(InC), D(InD) {}
+
+	bool IsValid() const
+	{
+		return (A | B | C | D) != 0;
+	}
+
+	std::string ToString() const
+	{
+		std::stringstream ss;
+		ss << std::hex << std::setfill('0')
+		   << std::setw(8) << A << "-"
+		   << std::setw(4) << (B >> 16) << "-"
+		   << std::setw(4) << (B & 0xFFFF) << "-"
+		   << std::setw(4) << (C >> 16) << "-"
+		   << std::setw(4) << (C & 0xFFFF)
+		   << std::setw(8) << D;
+		return ss.str();
+	}
+
+	static FGuid NewGuid()
+	{
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_int_distribution<uint32_t> dist;
+
+		return FGuid(dist(gen), dist(gen), dist(gen), dist(gen));
+	}
+
+	bool operator==(const FGuid& Other) const
+	{
+		return A == Other.A && B == Other.B && C == Other.C && D == Other.D;
+	}
+
+	bool operator!=(const FGuid& Other) const
+	{
+		return !(*this == Other);
+	}
+};
+
+)";
+	}
+
+
 
 	std::string UniqueSuperName;
 
@@ -5196,7 +5330,7 @@ using TActorBasedCycleFixup = CyclicDependencyFixupImpl::TCyclicClassFixup<Under
 void CppGenerator::GenerateUnrealContainers(StreamType& UEContainersHeader)
 {
 	WriteFileHead(UEContainersHeader, nullptr, EFileType::UnrealContainers, 
-		"Container implementations with iterators. See https://github.com/Fischsalat/UnrealContainers", "#include <cmath>\n#include <string>\n#include <stdexcept>\n#include <iostream>\n#include \"UtfN.hpp\"");
+		"Container implementations with iterators. See https://github.com/Fischsalat/UnrealContainers", "#include <iomanip>\n#include <random>\n#include <sstream>\n#include <cstdint>\n#include <cmath>\n#include <string>\n#include <stdexcept>\n#include <iostream>\n#include \"UtfN.hpp\"");
 
 
 	UEContainersHeader << R"(
@@ -5759,54 +5893,79 @@ namespace UC
 		template<typename T> friend Iterators::TSetIterator<T> end  (const TSet& Set);
 	};
 
-	template<typename KeyElementType, typename ValueElementType>
-	class TMap
+class TMap
+{
+public:
+	using ElementType = TPair<KeyElementType, ValueElementType>;
+
+private:
+	TSet<ElementType> Elements;
+
+	inline void VerifyIndex(int32 Index) const
 	{
-	public:
-		using ElementType = TPair<KeyElementType, ValueElementType>;
+		if (!IsValidIndex(Index))
+			throw std::out_of_range("Index was out of range!");
+	}
 
-	private:
-		TSet<ElementType> Elements;
+public:
+	inline int32 NumAllocated() const { return Elements.NumAllocated(); }
+	inline int32 Num() const { return Elements.Num(); }
+	inline int32 Max() const { return Elements.Max(); }
 
-	private:
-		inline void VerifyIndex(int32 Index) const { if (!IsValidIndex(Index)) throw std::out_of_range("Index was out of range!"); }
+	inline bool IsValidIndex(int32 Index) const { return Elements.IsValidIndex(Index); }
+	inline bool IsValid() const { return Elements.IsValid(); }
 
-	public:
-		inline int32 NumAllocated() const { return Elements.NumAllocated(); }
+	const ContainerImpl::FBitArray& GetAllocationFlags() const { return Elements.GetAllocationFlags(); }
 
-		inline int32 Num() const { return Elements.Num(); }
-		inline int32 Max() const { return Elements.Max(); }
-
-		inline bool IsValidIndex(int32 Index) const { return Elements.IsValidIndex(Index); }
-
-		inline bool IsValid() const { return Elements.IsValid(); }
-
-	public:
-		const ContainerImpl::FBitArray& GetAllocationFlags() const { return Elements.GetAllocationFlags(); }
-
-	public:
-		inline decltype(auto) Find(const KeyElementType& Key, bool(*Equals)(const KeyElementType& LeftKey, const KeyElementType& RightKey))
+	ElementType* Find(const KeyElementType& Key, bool(*Equals)(const KeyElementType&, const KeyElementType&))
+	{
+		for (auto It = begin(*this); It != end(*this); ++It)
 		{
-			for (auto It = begin(*this); It != end(*this); ++It)
-			{
-				if (Equals(It->Key(), Key))
-					return It;
-			}
-		
-			return end(*this);
+			if (Equals(It->Key(), Key))
+				return &(*It);
 		}
+		return nullptr;
+	}
 
-	public:
-		inline       ElementType& operator[] (int32 Index)       { return Elements[Index]; }
-		inline const ElementType& operator[] (int32 Index) const { return Elements[Index]; }
+	bool Contains(const KeyElementType& Key, bool(*Equals)(const KeyElementType&, const KeyElementType&)) const
+	{
+		for (const auto& Pair : Elements)
+		{
+			if (Equals(Pair.Key(), Key))
+				return true;
+		}
+		return false;
+	}
 
-		inline bool operator==(const TMap<KeyElementType, ValueElementType>& Other) const { return Elements == Other.Elements; }
-		inline bool operator!=(const TMap<KeyElementType, ValueElementType>& Other) const { return Elements != Other.Elements; }
+	void Add(const KeyElementType& Key, const ValueElementType& Value)
+	{
+		Elements.Add(TPair<KeyElementType, ValueElementType>(Key, Value));
+	}
 
-	public:
-		template<typename KeyType, typename ValueType> friend Iterators::TMapIterator<KeyType, ValueType> begin(const TMap& Map);
-		template<typename KeyType, typename ValueType> friend Iterators::TMapIterator<KeyType, ValueType> end  (const TMap& Map);
-	};
+	void Remove(const KeyElementType& Key, bool(*Equals)(const KeyElementType&, const KeyElementType&))
+	{
+		for (int32 i = 0; i < Elements.Num(); ++i)
+		{
+			if (Equals(Elements[i].Key(), Key))
+			{
+				Elements.RemoveAt(i);
+				break;
+			}
+		}
+	}
+
+	void Empty() { Elements.Empty(); }
+	bool IsEmpty() const { return Elements.IsEmpty(); }
+
+	inline       ElementType& operator[](int32 Index)       { return Elements[Index]; }
+	inline const ElementType& operator[](int32 Index) const { return Elements[Index]; }
+
+	inline bool operator==(const TMap& Other) const { return Elements == Other.Elements; }
+	inline bool operator!=(const TMap& Other) const { return Elements != Other.Elements; }
+
+	template<typename K, typename V> friend Iterators::TMapIterator<K, V> begin(const TMap<K, V>& Map);
+	template<typename K, typename V> friend Iterators::TMapIterator<K, V> end(const TMap<K, V>& Map);
+};
 
 	namespace Iterators
 	{
