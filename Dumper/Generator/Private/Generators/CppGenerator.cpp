@@ -637,7 +637,10 @@ void CppGenerator::GenerateStruct(const StructWrapper& Struct, StreamType& Struc
 
 	if (UniqueName == "FFastArraySerializer")
 	{
-		StructFile << R"(struct FFastArraySerializer
+		StructFile << R"(
+struct FFastArraySerializerItem;
+
+struct FFastArraySerializer
 {
 public:
     uint8 ItemMap[80];
