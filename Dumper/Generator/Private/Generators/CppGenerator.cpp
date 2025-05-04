@@ -635,12 +635,62 @@ void CppGenerator::GenerateStruct(const StructWrapper& Struct, StreamType& Struc
 
 	std::string UniqueName = StructNameOverride.empty() ? GetStructPrefixedName(Struct) : StructNameOverride;
 
-	if (UniqueName == "FFastArraySerializer")
+	if (UniqueName == "FFastArraySerializer" && std::stoi(Settings::Generator::GameVersion) <= 4.22)
 	{
 		StructFile << R"(
 struct FFastArraySerializerItem;
 
-struct FFastArraySerializer
+struct alignas(0x08) FFastArraySerializer
+{
+public:
+    char ItemMap[0x50];
+    int32_t IDCounter;
+    int32_t ArrayReplicationKey;
+
+    char GuidReferencesMap[0x50];
+
+    int32_t CachedNumItems;
+    int32_t CachedNumItemsToConsiderForWriting;
+
+    void MarkItemDirty(FFastArraySerializerItem& Item)
+    {
+        if (Item.ReplicationID == -1)
+        {
+            Item.ReplicationID = ++IDCounter;
+            if (IDCounter == -1)
+            {
+                IDCounter++;
+            }
+        }
+
+        Item.ReplicationKey++;
+        MarkArrayDirty();
+    }
+
+    void MarkArrayDirty()
+    {
+        IncrementArrayReplicationKey();
+
+        CachedNumItems = -1;
+        CachedNumItemsToConsiderForWriting = -1;
+    }
+
+    void IncrementArrayReplicationKey()
+    {
+        ArrayReplicationKey++;
+        if (ArrayReplicationKey == -1)
+        {
+            ArrayReplicationKey++;
+        }
+    }
+};
+
+)";
+		return;
+	}
+	else if (UniqueName == "FFastArraySerializer")
+	{
+		StructFile << R"(struct FFastArraySerializer
 {
 public:
     uint8 ItemMap[80];
@@ -683,7 +733,6 @@ public:
         CachedNumItemsToConsiderForWriting = -1;
     }
 };)";
-
 		return;
 	}
 
@@ -760,6 +809,8 @@ public:
 
 	if (bHasFunctions)
 		StructFile << GenerateFunctions(Struct, Members, UniqueName, FunctionFile, ParamFile);
+
+
 
 	StructFile << "};\n";
 
