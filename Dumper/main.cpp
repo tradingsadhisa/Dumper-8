@@ -31,9 +31,6 @@ DWORD MainThread(HMODULE Module)
 
 	std::cout << "Started Generation [Dumper-7]!\n";
 
-	if (!Settings::Debug::bLateInjection)
-		Sleep(5000);
-
 	Generator::InitEngineCore();
 	Generator::InitInternal();
 
