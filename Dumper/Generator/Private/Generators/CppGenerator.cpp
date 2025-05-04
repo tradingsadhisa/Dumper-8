@@ -635,7 +635,9 @@ void CppGenerator::GenerateStruct(const StructWrapper& Struct, StreamType& Struc
 
 	std::string UniqueName = StructNameOverride.empty() ? GetStructPrefixedName(Struct) : StructNameOverride;
 
-	if (UniqueName == "FFastArraySerializer" && std::stoi(Settings::Generator::GameVersion) <= 4.22)
+	static int Test = (std::stof(Settings::Generator::GameVersion) * 100);
+
+	if (UniqueName == "FFastArraySerializer" && Test <= 422)
 	{
 		StructFile << R"(
 struct FFastArraySerializerItem;
@@ -690,7 +692,10 @@ public:
 	}
 	else if (UniqueName == "FFastArraySerializer")
 	{
-		StructFile << R"(struct FFastArraySerializer
+		StructFile << R"(
+struct FFastArraySerializerItem;
+
+struct FFastArraySerializer
 {
 public:
     uint8 ItemMap[80];
