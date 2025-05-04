@@ -885,8 +885,6 @@ uint32_t A;
 )";
 	}
 
-
-
 	std::string UniqueSuperName;
 
 	const int32 StructSize = Struct.GetSize();
