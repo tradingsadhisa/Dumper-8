@@ -885,7 +885,7 @@ int32_t OffsetFinder::FindDatatableRowMapOffset()
 
 uint64_t OffsetFinder::FindMemoryFree()
 {
-	Memcury::Scanner StringRef = Memcury::Scanner::FindStringRef(L"Targets next AbilitySystemComponent in ShowDebug AbilitySystem");
+	Memcury::Scanner StringRef = Memcury::Scanner::FindStringRef(L"Athena.MakePercentVehiclesInoperable");
 
 	if (!StringRef.Get())
 	{
@@ -893,13 +893,13 @@ uint64_t OffsetFinder::FindMemoryFree()
 		return 0;
 	}
 
-	uint64 FMemoryFreeAddr = StringRef.ScanFor({ 0xE8 }, true, 1).RelativeOffset(1).Get();
+	uint64 FMemoryFreeAddr = StringRef.ScanFor({ 0xE8 }, true, 2).RelativeOffset(1).Get();
 
 	return FMemoryFreeAddr - uintptr_t(GetModuleHandle(0));
 }
 uint64_t OffsetFinder::FindMemoryRealloc()
 {
-	Memcury::Scanner StringRef = Memcury::Scanner::FindStringRef(L"Targets next AbilitySystemComponent in ShowDebug AbilitySystem");
+	Memcury::Scanner StringRef = Memcury::Scanner::FindStringRef(L"Athena.MakePercentVehiclesInoperable");
 
 	if (!StringRef.Get())
 	{
@@ -907,7 +907,7 @@ uint64_t OffsetFinder::FindMemoryRealloc()
 		return 0;
 	}
 
-	uint64 FMemoryReallocAddr = StringRef.ScanFor({ 0xE8 }).RelativeOffset(1).Get();
+	uint64 FMemoryReallocAddr = StringRef.ScanFor({ 0xE8 }, true, 1).RelativeOffset(1).Get();
 
 	return FMemoryReallocAddr - uintptr_t(GetModuleHandle(0));
 }
