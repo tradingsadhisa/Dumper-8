@@ -101,7 +101,7 @@ void Off::InSDK::Text::InitTextOffsets()
 {
 	if (!Off::InSDK::ProcessEvent::PEIndex)
 	{
-		std::cout << std::format("\nDumper-7: Error, 'InitInSDKTextOffsets' was called before ProcessEvent was initialized!\n") << std::endl;
+		std::cout << std::format("\nDumper-8: Error, 'InitInSDKTextOffsets' was called before ProcessEvent was initialized!\n") << std::endl;
 		return;
 	}
 
@@ -166,7 +166,7 @@ void Off::InSDK::Text::InitTextOffsets()
 
 	if (!FTextDataPtr)
 	{
-		std::cout << std::format("\nDumper-7: Error, 'FTextDataPtr' could not be found!\n") << std::endl;
+		std::cout << std::format("\nDumper-8: Error, 'FTextDataPtr' could not be found!\n") << std::endl;
 		return;
 	}
 
