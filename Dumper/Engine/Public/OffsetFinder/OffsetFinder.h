@@ -119,4 +119,8 @@ namespace OffsetFinder
 
 	/* InSDK -> UDataTable */
 	int32_t FindDatatableRowMapOffset();
+
+	/* FMemory*/
+	uint64_t FindMemoryFree();
+	uint64_t FindMemoryRealloc();
 }

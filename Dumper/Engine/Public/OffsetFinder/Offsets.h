@@ -295,6 +295,12 @@ namespace Off
 	{
 		inline int32 ValueProperty;
 	}
+
+	namespace FMemory
+	{
+		inline uint64_t Free;
+		inline uint64_t Realloc;
+	}
 }
 
 namespace PropertySizes

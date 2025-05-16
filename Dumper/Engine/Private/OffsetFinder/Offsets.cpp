@@ -317,6 +317,11 @@ void Off::Init()
 	Off::InSDK::UDataTable::RowMap = OffsetFinder::FindDatatableRowMapOffset();
 	std::cout << std::format("Off::InSDK::UDataTable::RowMap: 0x{:X}\n", Off::InSDK::UDataTable::RowMap) << std::endl;
 
+	Off::FMemory::Free = OffsetFinder::FindMemoryFree();
+	std::cout << std::format("Off::FMemory::Free: 0x{:X}\n", Off::FMemory::Free) << std::endl;
+	Off::FMemory::Realloc = OffsetFinder::FindMemoryRealloc();
+	std::cout << std::format("Off::FMemory::Realloc: 0x{:X}\n", Off::FMemory::Realloc) << std::endl;
+
 	OffsetFinder::PostInitFNameSettings();
 
 	std::cout << std::endl;

@@ -210,6 +210,24 @@ namespace UC
 		inline const ValueType& Value() const { return Second; }
 	};
 
+	class FMemory
+	{
+	public:
+		static void Free(void* Ptr)
+		{
+			static void (*FMemoryFree)(void* Ptr) = decltype(FMemoryFree)(Off::FMemory::Free);
+
+			return FMemoryFree(Ptr);
+		}
+
+		static void* Realloc(void* Ptr, uint64 Size, uint32 Alignment)
+		{
+			static void* (*FMemoryRealloc)(void* Ptr, uint64 Size, uint32 Alignment) = decltype(FMemoryRealloc)(Off::FMemory::Realloc);
+
+			return FMemoryRealloc(Ptr, Size, Alignment);
+		}
+	};
+
 	template<typename ArrayElementType>
 	class TArray
 	{
@@ -254,7 +272,7 @@ namespace UC
 	public:
 		inline void ResizeTo(int32_t NewMax)
 		{
-			Data = (ArrayElementType*)realloc(Data, (MaxElements = NewMax) * sizeof(ArrayElementType));
+			Data = (ArrayElementType*)FMemory::Realloc(Data, (MaxElements = NewMax) * sizeof(ArrayElementType));
 		}
 
 		/* Adds to the array if there is still space for one more element */
@@ -295,7 +313,8 @@ namespace UC
 		inline void Free()
 		{
 			if (Data)
-				free(Data);
+				FMemory::Free(Data);
+			Data = nullptr;
 			MaxElements = 0;
 			NumElements = 0;
 		}

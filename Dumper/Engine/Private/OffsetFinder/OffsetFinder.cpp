@@ -883,3 +883,31 @@ int32_t OffsetFinder::FindDatatableRowMapOffset()
 	return RowStructProp.GetOffset() + RowStructProp.GetSize();
 }
 
+uint64_t OffsetFinder::FindMemoryFree()
+{
+	Memcury::Scanner StringRef = Memcury::Scanner::FindStringRef(L"Targets next AbilitySystemComponent in ShowDebug AbilitySystem");
+
+	if (!StringRef.Get())
+	{
+		std::cout << "\nDumper-8: [FMemory::Free] couldn't find stringRef.\n" << std::endl;
+		return 0;
+	}
+
+	uint64 FMemoryFreeAddr = StringRef.ScanFor({ 0xE8 }, true, 1).RelativeOffset(1).Get();
+
+	return FMemoryFreeAddr - uintptr_t(GetModuleHandle(0));
+}
+uint64_t OffsetFinder::FindMemoryRealloc()
+{
+	Memcury::Scanner StringRef = Memcury::Scanner::FindStringRef(L"Targets next AbilitySystemComponent in ShowDebug AbilitySystem");
+
+	if (!StringRef.Get())
+	{
+		std::cout << "\nDumper-8: [FMemory::Realloc] couldn't find stringRef.\n" << std::endl;
+		return 0;
+	}
+
+	uint64 FMemoryReallocAddr = StringRef.ScanFor({ 0xE8 }).RelativeOffset(1).Get();
+
+	return FMemoryReallocAddr - uintptr_t(GetModuleHandle(0));
+}
