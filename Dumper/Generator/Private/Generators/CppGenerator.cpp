@@ -3286,24 +3286,6 @@ ClassType* GetDefaultObjImpl()
 	return reinterpret_cast<ClassType*>(ClassType::StaticClass()->DefaultObject);
 }
 
-class FMemory
-	{
-	public:
-		static void Free(void* Ptr)
-		{
-			static void (*FMemoryFree)(void* Ptr) = decltype(FMemoryFree)(uintptr_t(GetModuleHandle(0)) + Offsets::Free);
-
-			return FMemoryFree(Ptr);
-		}
-
-		static void* Realloc(void* Ptr, uint64 Size, uint32 Alignment)
-		{
-			static void* (*FMemoryRealloc)(void* Ptr, uint64 Size, uint32 Alignment) = decltype(FMemoryRealloc)(uintptr_t(GetModuleHandle(0)) + Offsets::Realloc);
-
-			return FMemoryRealloc(Ptr, Size, Alignment);
-		}
-	};
-
 )";
 
 	// Start class 'FUObjectItem'
@@ -5223,7 +5205,23 @@ namespace UC
 	typedef uint64_t uint64;
 
 
-	
+	class FMemory
+	{
+	public:
+		static void Free(void* Ptr)
+		{
+			static void (*FMemoryFree)(void* Ptr) = decltype(FMemoryFree)(uintptr_t(GetModuleHandle(0)) + Offsets::Free);
+
+			return FMemoryFree(Ptr);
+		}
+
+		static void* Realloc(void* Ptr, uint64 Size, uint32 Alignment)
+		{
+			static void* (*FMemoryRealloc)(void* Ptr, uint64 Size, uint32 Alignment) = decltype(FMemoryRealloc)(uintptr_t(GetModuleHandle(0)) + Offsets::Realloc);
+
+			return FMemoryRealloc(Ptr, Size, Alignment);
+		}
+	};
     
 	template<typename ArrayElementType>
 	class TArray;
