@@ -5203,26 +5203,33 @@ namespace UC
 	typedef uint16_t uint16;
 	typedef uint32_t uint32;
 	typedef uint64_t uint64;
-
-
+)";
+	UEContainersHeader << R"(
 	class FMemory
 	{
 	public:
 		static void Free(void* Ptr)
 		{
-			static void (*FMemoryFree)(void* Ptr) = decltype(FMemoryFree)(uintptr_t(GetModuleHandle(0)) + Offsets::Free);
+)";
 
+	UEContainersHeader << std::format(R"(
+            static void (*FMemoryFree)(void* Ptr) = decltype(FMemoryFree)(uintptr_t(GetModuleHandle(0)) + 0x{:08X}); )", Off::FMemory::Free);
+	UEContainersHeader << R"(
 			return FMemoryFree(Ptr);
 		}
 
 		static void* Realloc(void* Ptr, uint64 Size, uint32 Alignment)
 		{
-			static void* (*FMemoryRealloc)(void* Ptr, uint64 Size, uint32 Alignment) = decltype(FMemoryRealloc)(uintptr_t(GetModuleHandle(0)) + Offsets::Realloc);
-
-			return FMemoryRealloc(Ptr, Size, Alignment);
+)";
+	UEContainersHeader << std::format(R"(
+            static void* (*FMemoryRealloc)(void* Ptr, uint64 Size, uint32 Alignment) = decltype(FMemoryRealloc)(uintptr_t(GetModuleHandle(0)) + 0x{:08X}); )", Off::FMemory::Realloc); 
+	UEContainersHeader << R"(		
+            return FMemoryRealloc(Ptr, Size, Alignment);
 		}
-	};
-    
+	}
+)";
+
+    UEContainersHeader << R"(
 	template<typename ArrayElementType>
 	class TArray;
 
