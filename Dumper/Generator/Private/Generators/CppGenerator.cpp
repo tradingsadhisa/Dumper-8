@@ -5188,7 +5188,7 @@ using TActorBasedCycleFixup = CyclicDependencyFixupImpl::TCyclicClassFixup<Under
 void CppGenerator::GenerateUnrealContainers(StreamType& UEContainersHeader)
 {
 	WriteFileHead(UEContainersHeader, nullptr, EFileType::UnrealContainers, 
-		"Container implementations with iterators. See https://github.com/Fischsalat/UnrealContainers", "#include <string>\n#include <stdexcept>\n#include <iostream>\n#include \"UtfN.hpp\"");
+		"Container implementations with iterators. See https://github.com/Fischsalat/UnrealContainers", "#include <string>\n#include <windows.h>\n#include <stdexcept>\n#include <iostream>\n#include \"UtfN.hpp\"");
 
 
 	UEContainersHeader << R"(
@@ -5226,7 +5226,7 @@ namespace UC
 	UEContainersHeader << R"(		
             return FMemoryRealloc(Ptr, Size, Alignment);
 		}
-	}
+	};
 )";
 
     UEContainersHeader << R"(
